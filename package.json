@@ -1,11 +1,11 @@
 {
-  "name": "webpack-minio-plugin",
+  "name": "webpack-miniojs-plugin",
   "version": "0.1.0",
   "description": "Uploads compiled assets to minio after build",
   "main": "dist/plugin.js",
   "scripts": {
     "build": "webpack --mode production",
-    "prepublishOnly": "npm run lint && npm run test && npm run build",
+    "prepublishOnly": "npm run lint && npm run build",
     "test": "NODE_ENV='test' mocha -t 10000 --require babel-register",
     "lint": "eslint ./src ./test",
     "watch": "webpack --watch --mode development",
@@ -18,7 +18,7 @@
     "url": "git@github.com:mapoio/webpack-minio-plugin.git"
   },
   "keywords": [
-    "s3",
+    "minio",
     "webpack",
     "node",
     "upload",
