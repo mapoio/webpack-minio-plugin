@@ -5,7 +5,7 @@ import path from 'path'
 import ProgressBar from 'progress'
 import _ from 'lodash'
 import mime from 'mime/lite'
-import Minio from 'minio'
+import {Client} from 'minio'
 
 import packageJson from '../package.json'
 
@@ -163,7 +163,7 @@ module.exports = class MinioPlugin {
     if (this.isConnected)
       return
 
-    this.client = new Minio.Client(this.clientConfig.minioOptions)
+    this.client = new Client(this.clientConfig.minioOptions)
     this.isConnected = true
   }
 
