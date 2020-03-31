@@ -43,12 +43,12 @@ var config = {
     ]
   },
 
-  externals: NODE_ENV === 'test' ? [] : [
-    'lodash',
-    'minio',
-    'recursive-readdir',
-    'progress'
-  ]
+  // externals: NODE_ENV === 'test' ? [] : [
+  //   'lodash',
+  //   'minio',
+  //   'recursive-readdir',
+  //   'progress'
+  // ]
 }
 
 module.exports = config
