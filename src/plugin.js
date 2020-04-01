@@ -2,7 +2,6 @@ import http from 'http'
 import https from 'https'
 import fs from 'fs'
 import path from 'path'
-import ProgressBar from 'progress'
 import _ from 'lodash'
 import mime from 'mime/lite'
 import {Client} from 'minio'
@@ -26,7 +25,7 @@ const compileError = function(compilation, error) {
   compilation.errors.push(new Error(error))
 }
 
-module.exports = class MinioPlugin {
+export class MinioPlugin {
   constructor(options = {}) {
     var {
       include,
@@ -77,11 +76,11 @@ module.exports = class MinioPlugin {
                              compiler.options.output.context ||
                              '.'
 
-    compiler.hooks.done.tapPromise(packageJson.name, async(compilation) => {
+    compiler.hooks.done.tapPromise(packageJson.name, async({compilation}) => {
       var error
 
       if (!hasRequiredUploadOpts)
-        error = `MinioPlugin-RequiredMINIOUploadOpts: ${REQUIRED_MINIO_UP_OPTS.join(', ')}`
+        error = `MinioPlugin-RequiredMinioUploadOpts: ${REQUIRED_MINIO_UP_OPTS.join(', ')}`
 
       if (error) return compileError(compilation, error)
 
@@ -125,8 +124,10 @@ module.exports = class MinioPlugin {
       return file
   }
 
-  getAssetFiles({assets}) {
+  getAssetFiles(ctx) {
+    const assets = _.get(ctx, 'assets')
     const files = _.map(assets, (value, name) => ({name, path: value.existsAt}))
+
 
     return Promise.resolve(files)
   }
@@ -173,27 +174,6 @@ module.exports = class MinioPlugin {
       .then(nPath => this.options.basePath = nPath)
   }
 
-  setupProgressBar(uploadFiles) {
-    const progressTotal = uploadFiles
-      .reduce((acc, {upload}) => upload.totalBytes + acc, 0)
-
-    const progressBar = new ProgressBar('Uploading [:bar] :percent :etas', {
-      complete: '>',
-      incomplete: '∆',
-      total: progressTotal
-    })
-
-    var progressValue = 0
-
-    uploadFiles.forEach(function({upload}) {
-      upload.on('httpUploadProgress', function({loaded}) {
-        progressValue += loaded
-
-        progressBar.update(progressValue)
-      })
-    })
-  }
-
   prioritizeFiles(files) {
     const remainingFiles = [...files]
     const prioritizedFiles = this.options.priority
@@ -228,9 +208,6 @@ module.exports = class MinioPlugin {
         } else {
           const uploadFiles = files.map(file => this.uploadFile(file.name, file.path))
 
-          if (this.options.progress) {
-            this.setupProgressBar(uploadFiles)
-          }
 
           return Promise.all(uploadFiles.map(({promise}) => promise))
         }
@@ -247,19 +224,24 @@ module.exports = class MinioPlugin {
     if (Key[0] === '/')
       Key = Key.substr(1)
 
-    if (minioParams.ContentType === undefined)
-      minioParams.ContentType = mime.getType(fileName)
-
+    if (minioParams['Content-Type'] === undefined) {
+      minioParams['Content-Type'] = mime.getType(fileName)
+    }
     const metaData = _.omit(minioParams, ['Bucket'])
     const Bucket = minioParams.Bucket
     const Body = fs.createReadStream(file)
-    const upload = this.client.putObject(Bucket, fileName, Body, metaData, (err) => {
-      // eslint-disable-next-line no-console
-      if (err) return console.error(err)
+    const upload = new Promise((reslove, reject) => {
+      this.client.putObject(Bucket, Key, Body, metaData, (err, res) => {
+        // eslint-disable-next-line no-console
+        if (err) return reject(err)
+        reslove(res)
+      })
     })
     // _.merge({Key, Body}, DEFAULT_UPLOAD_OPTIONS, minioParams)
     // )
 
-    return {upload, promise: upload.promise()}
+    return {upload: {totalBytes: file.length}, promise: upload}
   }
 }
+
+export default MinioPlugin

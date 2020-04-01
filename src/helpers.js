@@ -1,6 +1,6 @@
-import _ from 'lodash'
-import path from 'path'
-import readDir from 'recursive-readdir'
+const _ = require('lodash')
+const path = require('path')
+const readDir = require('recursive-readdir')
 
 export const UPLOAD_IGNORES = [
   '.DS_Store'
@@ -8,7 +8,7 @@ export const UPLOAD_IGNORES = [
 
 export const REQUIRED_MINIO_UP_OPTS = ['Bucket']
 export const PATH_SEP = path.sep
-export const S3_PATH_SEP = '/'
+export const MINIO_PATH_SEP = '/'
 export const DEFAULT_TRANSFORM = (item) => Promise.resolve(item)
 
 export const addTrailingMinioSep = fPath => {
@@ -30,7 +30,7 @@ export const translatePathFromFiles = (rootPath) => {
         name: file
           .replace(rootPath, '')
           .split(PATH_SEP)
-          .join(S3_PATH_SEP)
+          .join(MINIO_PATH_SEP)
       }
     })
   }
